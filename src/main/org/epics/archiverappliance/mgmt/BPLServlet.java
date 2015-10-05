@@ -24,10 +24,11 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.bpl.AbortArchiveRequest;
 import org.epics.archiverappliance.mgmt.bpl.AbortArchiveRequestForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.AddAliasAction;
-import org.epics.archiverappliance.mgmt.bpl.AddChannelArchiverServer;
-import org.epics.archiverappliance.mgmt.bpl.AddChannelArchiverServerArchives;
+import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServer;
+import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServerArchives;
 import org.epics.archiverappliance.mgmt.bpl.AggregatedApplianceInfo;
 import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
+import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsNotInListAction;
 import org.epics.archiverappliance.mgmt.bpl.ChangeArchivalParamsAction;
 import org.epics.archiverappliance.mgmt.bpl.ChangeTypeForPV;
 import org.epics.archiverappliance.mgmt.bpl.ChannelArchiverListView;
@@ -56,7 +57,7 @@ import org.epics.archiverappliance.mgmt.bpl.PauseArchivingPV;
 import org.epics.archiverappliance.mgmt.bpl.PutPVTypeInfo;
 import org.epics.archiverappliance.mgmt.bpl.RefreshPVDataFromChannelArchivers;
 import org.epics.archiverappliance.mgmt.bpl.RemoveAliasAction;
-import org.epics.archiverappliance.mgmt.bpl.RemoveChannelArchiverServer;
+import org.epics.archiverappliance.mgmt.bpl.RemoveExternalArchiverServer;
 import org.epics.archiverappliance.mgmt.bpl.RenamePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ReshardPV;
 import org.epics.archiverappliance.mgmt.bpl.ResumeArchivingPV;
@@ -162,10 +163,10 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
 		addAction("/getApplianceMetrics", ApplianceMetrics.class);
 		addAction("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
-		addAction("/getChannelArchiverServers", ChannelArchiverListView.class);
-		addAction("/addChannelArchiverServer", AddChannelArchiverServer.class);
-		addAction("/addChannelArchiverServerArchives", AddChannelArchiverServerArchives.class);
-		addAction("/removeChannelArchiverServer", RemoveChannelArchiverServer.class);
+		addAction("/getExternalArchiverServers", ChannelArchiverListView.class);
+		addAction("/addExternalArchiverServer", AddExternalArchiverServer.class);
+		addAction("/addExternalArchiverServerArchives", AddExternalArchiverServerArchives.class);
+		addAction("/removeExternalArchiverServer", RemoveExternalArchiverServer.class);
 		addAction("/test/compareWithChannelArchiver", CompareWithChannelArchiver.class);
 		addAction("/getAggregatedApplianceInfo", AggregatedApplianceInfo.class);
 		addAction("/importDataFromPlugin", ImportDataFromPlugin.class);
@@ -206,6 +207,7 @@ public class BPLServlet extends HttpServlet {
 		addPostAction("/resumeArchivingPV", ResumeArchivingPV.class);
 		addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
 		addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
+		addPostAction("/archivedPVsNotInList", ArchivedPVsNotInListAction.class);
 	}
 	
 	@Override

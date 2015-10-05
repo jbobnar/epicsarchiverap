@@ -86,7 +86,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  * To specify multiple post processors, use standard URL syntax like so <code>pp=rms&pp=mean_3600</code>
  * </dd>
  * <dt>consolidateOnShutdown</dt><dd>This lets you control if ETL should push data to the subsequent store on appserver shutdown. This is useful if you are using a RAMDisk for the short term store.</dd>
- * <dt>reducedata</dt><dd>An optional parameter; use this parameter to reduce the data as you move it into this store. You can use any of the <a href="http://epicsarchiverap.sourceforge.net/userguide.html#post_processing">post processors</a> that can be used with the <code>pp</code> argument.
+ * <dt>reducedata</dt><dd>An optional parameter; use this parameter to reduce the data as you move it into this store. You can use any of the <a href="http://slacmshankar.github.io/epicsarchiver_docs/userguide.html#post_processing">post processors</a> that can be used with the <code>pp</code> argument.
  * For example, if you define the LTS as <code>pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR&reducedata=firstSample_3600</code>, then when moving data into this store, ETL will apply the <code>firstSample_3600</code> operator on the raw data to reduce the data and store only the reduced data.
  * The difference between this parameter and the <code>pp</code> parameter is that in the <code>reducedata</code> case, only the reduced data is stored. The raw data is thrown away.
  * If you specify both the <code>pp</code> and the <code>reducedata</code>, you may get unpredictable results because the raw data is necessary to precompute the caches. 
@@ -187,7 +187,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					logger.debug("Found " + paths.length + " cached entries for " + pvName + " for post processor " + extension);
 				}
 			}
-			logger.debug(desc + " Found " + (paths != null ? paths.length : 0) + " matching files for pv " + pvName);
+			logger.debug(desc + " Found " + (paths != null ? paths.length : 0) + " matching files for pv " + pvName + " in store " + this.getName());
 			boolean useSearchForPositions = (this.compressionMode == CompressionMode.NONE);
 			boolean doNotuseSearchForPositions = !useSearchForPositions;
 			
@@ -201,7 +201,12 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(paths != null && paths.length == 1) {
 				PBFileInfo fileInfo = new PBFileInfo(paths[0]); 
 				ArchDBRTypes dbrtype = fileInfo.getType();
-				ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[0], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));
+				if(fileInfo.getLastEventEpochSeconds() <= TimeUtils.convertToEpochSeconds(startTime)) { 
+					logger.debug("All we can get from this store is the last known event at " + TimeUtils.convertToHumanReadableString(fileInfo.getLastEventEpochSeconds()));
+					ret.add(CallableEventStream.makeOneEventCallable(fileInfo.getLastEvent(), new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear()), postProcessor, askingForProcessedDataButAbsentInCache));
+				} else { 
+					ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[0], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));
+				}
 			} else if(paths != null && paths.length > 1) {
 				PBFileInfo fileInfo = new PBFileInfo(paths[0]); 
 				ArchDBRTypes dbrtype = fileInfo.getType();
@@ -658,6 +663,33 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 		
 		return null;
 	}
+	
+	@Override
+	public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
+		try {
+			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
+			logger.debug(desc + " Found " + (paths != null ? paths.length : 0) + " matching files for pv " + pvName);
+			if(paths != null && paths.length > 0) {
+				for(int i = 0; i < paths.length; i++) {
+					if(logger.isDebugEnabled()) logger.debug("Looking for first known event in file " + paths[i].toAbsolutePath().toString());
+					try { 
+						PBFileInfo fileInfo = new PBFileInfo(paths[i]);
+						if(fileInfo.getFirstEvent() != null) return fileInfo.getFirstEvent();
+					} catch(Exception ex) { 
+						logger.warn("Exception determing header information from file " + paths[i].toAbsolutePath().toString(), ex);
+					}
+				}
+			}
+		} catch(NoSuchFileException ex) {
+			// We expect a NoSuchFileException if the file does not exist.
+			return null;
+		} catch (Exception ex) {
+			logger.error("Exception determining first known event for " + pvName, ex);
+		}
+		
+		return null;
+	}
+
 	
 	/**
 	 * Get last known timestamp for append purposes. If last event is not known, we return time(0)

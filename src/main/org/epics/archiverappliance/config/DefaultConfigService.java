@@ -492,14 +492,18 @@ public class DefaultConfigService implements ConfigService {
 					} else { 
 						String[] addressparts = applInfo.getClusterInetPort().split(":");
 						String inetaddrpart = addressparts[0];
-						InetAddress inetaddr = InetAddress.getByName(inetaddrpart);
-						if(!inetaddrpart.equals("localhost") && inetaddr.isLoopbackAddress()) { 
-							logger.info("Address for appliance " + applInfo.getIdentity() + " -  "+ inetaddr.toString() + " is a loopback address. Changing this to 127.0.0.1 to clustering happy");
-							inetaddr = InetAddress.getByName("127.0.0.1");
+						try { 
+							InetAddress inetaddr = InetAddress.getByName(inetaddrpart);
+							if(!inetaddrpart.equals("localhost") && inetaddr.isLoopbackAddress()) { 
+								logger.info("Address for appliance " + applInfo.getIdentity() + " -  "+ inetaddr.toString() + " is a loopback address. Changing this to 127.0.0.1 to clustering happy");
+								inetaddr = InetAddress.getByName("127.0.0.1");
+							}
+							int clusterPort = Integer.parseInt(addressparts[1]);
+							logger.info("Adding " + applInfo.getIdentity() + " from appliances.xml to the cluster discovery using cluster inetport " + inetaddr.toString() + ":" + clusterPort);
+							config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(inetaddr.getHostAddress() + ":" + clusterPort);
+						} catch(UnknownHostException ex) { 
+							configlogger.info("Cannnot resolve the IP address for appliance " + inetaddrpart + ". Skipping adding this appliance to the cliuster.");
 						}
-						int clusterPort = Integer.parseInt(addressparts[1]);
-						logger.info("Adding " + applInfo.getIdentity() + " from appliances.xml to the cluster discovery using cluster inetport " + inetaddr.toString() + ":" + clusterPort);
-						config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(inetaddr.getHostAddress() + ":" + clusterPort);
 					}
 				}
 				hzinstance = Hazelcast.newHazelcastInstance(config);
@@ -513,6 +517,7 @@ public class DefaultConfigService implements ConfigService {
 				ClientConfig clientConfig = new ClientConfig();
 				clientConfig.getGroupConfig().setName("archappl");
 				clientConfig.getGroupConfig().setPassword("archappl");
+				clientConfig.setExecutorPoolSize(4);
 				// Non mgmt client can only connect to their MGMT webapp.
 				String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
 				String myHostName = myAddrParts[0];
@@ -1332,16 +1337,16 @@ public class DefaultConfigService implements ConfigService {
 	
 	
 	@Override
-	public Map<String, String> getChannelArchiverDataServers() {
+	public Map<String, String> getExternalArchiverDataServers() {
 		return channelArchiverDataServers;
 	}
 
 	@Override
-	public void addChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
+	public void addExternalArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
 		String[] archives = archivesCSV.split(",");
 		boolean loadCAPVs = false;
-		if(!this.getChannelArchiverDataServers().containsKey(serverURL)) { 
-			this.getChannelArchiverDataServers().put(serverURL, archivesCSV);
+		if(!this.getExternalArchiverDataServers().containsKey(serverURL)) { 
+			this.getExternalArchiverDataServers().put(serverURL, archivesCSV);
 			loadCAPVs = true;
 		} else { 
 			logger.info(serverURL + " already exists in the map. So, skipping loading PVs from the external server.");
@@ -1358,7 +1363,7 @@ public class DefaultConfigService implements ConfigService {
 			if(loadCAPVs) { 
 				for(int i = 0; i < archives.length; i++) {
 					String archive = archives[i];
-					loadChannelArchiverPVs(serverURL, archive);
+					loadExternalArchiverPVs(serverURL, archive);
 				}
 			}
 		} catch(Exception ex) {
@@ -1369,8 +1374,8 @@ public class DefaultConfigService implements ConfigService {
 	
 	
 	@Override
-	public void removeChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
-		this.getChannelArchiverDataServers().remove(serverURL);
+	public void removeExternalArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
+		this.getExternalArchiverDataServers().remove(serverURL);
 		// We always add to persistence; whether this is from the UI or from the other appliances in the cluster.
 		if(this.persistanceLayer != null) { 
 			logger.info("Removing the channel archiver server " + serverURL + " from the persistent store.");
@@ -1381,13 +1386,20 @@ public class DefaultConfigService implements ConfigService {
 
 
 	/**
-	 * Given a Channel Archiver data server URL and an archive; this adds the PVs in the Channel Archiver so that they can be proxied.
+	 * Given a external Archiver data server URL and an archive; 
+	 * If this is a ChannelArchiver (archives != pbraw); 
+	 * this adds the PVs in the Channel Archiver so that they can be proxied.
 	 * @param serverURL
 	 * @param archive
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	private void loadChannelArchiverPVs(String serverURL, String archive) throws IOException, SAXException {
+	private void loadExternalArchiverPVs(String serverURL, String archive) throws IOException, SAXException {
+		if(archive.equals("pbraw")) {
+			logger.debug("We do not load PV names from external EPICS archiver appliances. These can number in the multiple millions and the respone on retrieval is fast enough anyways");
+			return;
+		}
+		
 		ChannelArchiverDataServerInfo serverInfo = new ChannelArchiverDataServerInfo(serverURL, archive);
 		NamesHandler handler = new NamesHandler();
 		logger.debug("Getting list of PV's from Channel Archiver Server at " + serverURL + " using index " + archive);
@@ -1813,16 +1825,16 @@ public class DefaultConfigService implements ConfigService {
 			List<String> externalServerKeys = persistanceLayer.getExternalDataServersKeys();
 			for(String serverUrl : externalServerKeys) {
 				String archivesCSV = persistanceLayer.getExternalDataServer(serverUrl);
-				if(this.getChannelArchiverDataServers().containsKey(serverUrl)) { 
+				if(this.getExternalArchiverDataServers().containsKey(serverUrl)) { 
 					configlogger.info("Skipping adding " + serverUrl + " on this appliance as another appliance has already added it");
 				} else { 
-					this.getChannelArchiverDataServers().put(serverUrl, archivesCSV);
+					this.getExternalArchiverDataServers().put(serverUrl, archivesCSV);
 					String[] archives = archivesCSV.split(",");
 
 					try {
 						for(int i = 0; i < archives.length; i++) {
 							String archive = archives[i];
-							loadChannelArchiverPVs(serverUrl, archive);
+							loadExternalArchiverPVs(serverUrl, archive);
 						}
 					} catch(Exception ex) {
 						logger.error("Exception adding Channel Archiver archives " + serverUrl + " - " + archivesCSV, ex);
@@ -1849,7 +1861,7 @@ public class DefaultConfigService implements ConfigService {
 				String url = (String) arg0.getKey();
 				String archivesCSV = (String) arg0.getValue();
 				try { 
-					removeChannelArchiverDataServer(url, archivesCSV);
+					removeExternalArchiverDataServer(url, archivesCSV);
 				} catch(Exception ex) { 
 					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
 				}
@@ -1864,7 +1876,7 @@ public class DefaultConfigService implements ConfigService {
 				String url = (String) arg0.getKey();
 				String archivesCSV = (String) arg0.getValue();
 				try { 
-					addChannelArchiverDataServer(url, archivesCSV);
+					addExternalArchiverDataServer(url, archivesCSV);
 				} catch(Exception ex) { 
 					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
 				}
@@ -1902,7 +1914,7 @@ public class DefaultConfigService implements ConfigService {
 
 	@Override
 	public void refreshPVDataFromChannelArchiverDataServers() {
-		Map<String, String> existingCAServers = this.getChannelArchiverDataServers();
+		Map<String, String> existingCAServers = this.getExternalArchiverDataServers();
 		for(String serverURL : existingCAServers.keySet()) { 
 			String archivesCSV = existingCAServers.get(serverURL);
 			String[] archives = archivesCSV.split(",");
@@ -1910,7 +1922,7 @@ public class DefaultConfigService implements ConfigService {
 			try {
 				for(int i = 0; i < archives.length; i++) {
 					String archive = archives[i];
-					loadChannelArchiverPVs(serverURL, archive);
+					loadExternalArchiverPVs(serverURL, archive);
 				}
 			} catch(Throwable ex) {
 				logger.error("Exception adding Channel Archiver archives " + serverURL + " - " + archivesCSV, ex);

@@ -22,11 +22,12 @@ import org.json.simple.JSONValue;
 
 /**
  * Add Channel Archiver archives.
+ * This is the BPL that actually adds the external server into the system.
  * @author mshankar
  *
  */
-public class AddChannelArchiverServerArchives implements BPLAction {
-	private static Logger logger = Logger.getLogger(AddChannelArchiverServerArchives.class.getName());
+public class AddExternalArchiverServerArchives implements BPLAction {
+	private static Logger logger = Logger.getLogger(AddExternalArchiverServerArchives.class.getName());
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
@@ -42,10 +43,10 @@ public class AddChannelArchiverServerArchives implements BPLAction {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-
-		logger.info("Adding Channel Archiver server archives " + archivesCSV + " for server " + serverUrl);
 		
-		configService.addChannelArchiverDataServer(serverUrl, archivesCSV);
+		logger.info("Adding External Archiver server archives " + archivesCSV + " for server " + serverUrl);
+		
+		configService.addExternalArchiverDataServer(serverUrl, archivesCSV);
 		
 
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
