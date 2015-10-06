@@ -11,7 +11,7 @@
 
 #archstatpVNames {
     width: 600px;
-	height: 100px;
+    height: 100px;
 }
 
 #archivehelpdesk {
@@ -36,13 +36,15 @@
 
 #archstats th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
 	font-weight: bold;
+	color: #EBEBEB;
 }
 
 
 #archstats tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #reportchooselabel {
@@ -75,11 +77,13 @@
 
 
 .reporttable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 .reporttable tbody tr.rtbleven { 
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 .reporttable tbody tr td a img {
@@ -140,19 +144,23 @@
 }
 
 .archtabl_asc {
-	background: #99cedb url('../comm/img/sort_asc.png') no-repeat center right;
+	background: #808080 url('../comm/img/sort_asc.png') no-repeat center right;
+	color: #EBEBEB;
 }
 
 .archtabl_desc {
-	background: #99cedb url('../comm/img/sort_desc.png') no-repeat center right;
+	background: #808080 url('../comm/img/sort_desc.png') no-repeat center right;
+	color: #EBEBEB;
 }
 
 .archtabl_unsorted { 
-	background: #99cedb url('../comm/img/sort_both.png') no-repeat center right;
+	background: #808080 url('../comm/img/sort_both.png') no-repeat center right;
+	color: #EBEBEB;
 }
 
 .archtabl_nosort { 
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 .detailsviewheader {
@@ -198,13 +206,15 @@ img.disabled {
 
 #pvDetailsTable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
 	font-weight: bold;
+	color: #EBEBEB;
 }
 
 
 #pvDetailsTable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #pvDetailsName {
@@ -288,13 +298,15 @@ img.disabled {
 
 #metricsappliancestable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 	font-weight: bold;
 }
 
 
 #metricsappliancestable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #metricsappliancedetailsdiv {
@@ -318,13 +330,15 @@ img.disabled {
 
 #metricsappliancedetailstable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 	font-weight: bold;
 }
 
 
 #metricsappliancedetailstable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #metricsapplianceName {
@@ -435,13 +449,15 @@ s}
 
 #storageappliancestable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 	font-weight: bold;
 }
 
 
 #storageappliancestable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #storageappliancedetailsdiv {
@@ -466,13 +482,15 @@ s}
 
 #storageappliancedetailstable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 	font-weight: bold;
 }
 
 
 #storageappliancedetailstable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #storageapplianceName {
@@ -498,13 +516,15 @@ s}
 
 #instanceappliancestable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 	font-weight: bold;
 }
 
 
 #instanceappliancestable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #instanceappliancedetailsdiv {
@@ -529,13 +549,15 @@ s}
 
 #instanceappliancedetailstable th {
 	text-align: left;
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 	font-weight: bold;
 }
 
 
 #instanceappliancedetailstable tbody tr:nth-child(2n) {
-	background: #99cedb;
+	background: #808080;
+	color: #EBEBEB;
 }
 
 #instanceapplianceName {
