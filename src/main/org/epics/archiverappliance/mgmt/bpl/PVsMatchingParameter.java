@@ -41,93 +41,115 @@ public class PVsMatchingParameter {
 		LinkedList<String> pvNames = new LinkedList<String>();
 		int limit = defaultLimit;
 		String limitParam = req.getParameter("limit");
-		if(limitParam != null) { 
+		if(limitParam != null) {
 			limit = Integer.parseInt(limitParam);
 		}
-		
-		if(req.getParameter("pv") != null) { 
+
+		if(req.getParameter("pv") != null) {
 			String[] pvs = req.getParameter("pv").split(",");
-			for(String pv : pvs) { 
+			for(String pv : pvs) {
 				if(pv.contains("*") || pv.contains("?")) {
-					WildcardFileFilter matcher = new WildcardFileFilter(pv); 
+					WildcardFileFilter matcher = new WildcardFileFilter(pv);
 					for(String pvName : configService.getAllPVs()) {
 						if(matcher.accept((new File(pvName)))) {
 							pvNames.add(pvName);
-							if(limit != -1 && pvNames.size() >= limit) { 
+							if(limit != -1 && pvNames.size() >= limit) {
 								return pvNames;
 							}
 						}
 					}
+					for(String pvName : configService.getAllAliases()) {
+                        if(matcher.accept((new File(pvName)))) {
+                            pvNames.add(pvName);
+                            if(limit != -1 && pvNames.size() >= limit) {
+                                return pvNames;
+                            }
+                        }
+                    }
 				} else {
 					ApplianceInfo info = configService.getApplianceForPV(pv);
-					if(info != null) { 
+					if(info != null) {
 						pvNames.add(pv);
-						if(limit != -1 && pvNames.size() >= limit) { 
+						if(limit != -1 && pvNames.size() >= limit) {
 							return pvNames;
 						}
-					} else { 
-						if(includePVSThatDontExist) { 
-							pvNames.add(pv);							
-							if(limit != -1 && pvNames.size() >= limit) { 
+					} else {
+						if(includePVSThatDontExist) {
+							pvNames.add(pv);
+							if(limit != -1 && pvNames.size() >= limit) {
 								return pvNames;
 							}
 						}
 					}
 				}
 			}
-		} else { 
-			if(req.getParameter("regex") != null) { 
+		} else {
+			if(req.getParameter("regex") != null) {
 				String regex = req.getParameter("regex");
 				Pattern pattern = Pattern.compile(regex);
 				for(String pvName : configService.getAllPVs()) {
-					if(pattern.matcher(pvName).matches()) { 
+					if(pattern.matcher(pvName).matches()) {
 						pvNames.add(pvName);
-						if(limit != -1 && pvNames.size() >= limit) { 
+						if(limit != -1 && pvNames.size() >= limit) {
 							return pvNames;
 						}
 					}
 				}
-			} else { 
+				for(String pvName : configService.getAllAliases()) {
+                    if(pattern.matcher(pvName).matches()) {
+                        pvNames.add(pvName);
+                        if(limit != -1 && pvNames.size() >= limit) {
+                            return pvNames;
+                        }
+                    }
+                }
+			} else {
 				for(String pvName : configService.getAllPVs()) {
 					pvNames.add(pvName);
-					if(limit != -1 && pvNames.size() >= limit) { 
+					if(limit != -1 && pvNames.size() >= limit) {
 						return pvNames;
 					}
 				}
+				for(String pvName : configService.getAllAliases()) {
+                    pvNames.add(pvName);
+                    if(limit != -1 && pvNames.size() >= limit) {
+                        return pvNames;
+                    }
+                }
 			}
 		}
 		return pvNames;
 	}
-	
-	
+
+
 	public static LinkedList<String> getPVNamesFromPostBody(HttpServletRequest req, ConfigService configService) throws IOException {
 		LinkedList<String> pvNames = new LinkedList<String>();
 		String contentType = req.getContentType();
-		if(contentType != null) { 
-			switch(contentType) { 
-			case MimeTypeConstants.APPLICATION_JSON: 
+		if(contentType != null) {
+			switch(contentType) {
+			case MimeTypeConstants.APPLICATION_JSON:
 				try (LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
 					JSONParser parser=new JSONParser();
 					for(Object pvName : (JSONArray) parser.parse(lineReader)) {
 						pvNames.add((String) pvName);
 					}
-				} catch(ParseException ex) { 
+				} catch(ParseException ex) {
 					throw new IOException(ex);
 				}
 				return pvNames;
-			case MimeTypeConstants.APPLICATION_FORM_URLENCODED: 
+			case MimeTypeConstants.APPLICATION_FORM_URLENCODED:
 				String[] pvs = req.getParameter("pv").split(",");
 				for(String pv : pvs) {
 					pvNames.add(pv);
 				}
 				return pvNames;
-			case MimeTypeConstants.TEXT_PLAIN:				
+			case MimeTypeConstants.TEXT_PLAIN:
 			default:
 				// For the default we assume text/plain which is a list of PV's separated by unix newlines
 				try (LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
 					String pv = lineReader.readLine();
 					logger.debug("Parsed pv " + pv);
-					while(pv != null) { 
+					while(pv != null) {
 						pvNames.add(pv);
 						pv = lineReader.readLine();
 					}

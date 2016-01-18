@@ -23,9 +23,9 @@ public class SearchForPVsRegex implements BPLAction {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
-		
+
 		logger.debug("Regex for searching for pvnames is " + regex);
-		
+
 		Pattern pattern = Pattern.compile(regex);
 		LinkedList<String> matchingPVNames = new LinkedList<String>();
 		for(String pvName : configService.getAllPVs()) {
@@ -34,6 +34,12 @@ public class SearchForPVsRegex implements BPLAction {
 				matchingPVNames.add(pvName);
 			}
 		}
+		for(String pvName : configService.getAllAliases()) {
+            Matcher matcher = pattern.matcher(pvName);
+            if(matcher.matches()) {
+                matchingPVNames.add(pvName);
+            }
+        }
 		resp.setContentType("text/plain");
 		try(PrintWriter out = resp.getWriter()) {
 			for(String pvName : matchingPVNames) {
