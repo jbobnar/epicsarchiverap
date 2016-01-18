@@ -66,6 +66,10 @@ then
   FQ_HOSTNAME="localhost"
 fi
 
+
+[ -z "`type -p java`" -o -z "`type -p jar`" ] && die "Cannot find the java/jar executables. Please set your PATH correctly."
+
+
 ensuredir "$DATADIR"
 
 cd "$DATADIR"
@@ -211,7 +215,7 @@ ls -ltr
 if [ -f "$SRCDIR/site_specific_content/template_changes.html" ]
 then
   echo "Modifying static content to cater to site specific information"
-  java -cp ${TOMCAT_VERSION_FOLDER}/webapps/mgmt/WEB-INF/classes \
+java -cp ${TOMCAT_VERSION_FOLDER}/webapps/mgmt/WEB-INF/classes:${TOMCAT_VERSION_FOLDER}/webapps/mgmt/WEB-INF/lib/log4j-1.2.17.jar \
    org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters \
    "$SRCDIR/site_specific_content/template_changes.html" \
    ${TOMCAT_VERSION_FOLDER}/webapps/mgmt/ui
