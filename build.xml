@@ -20,13 +20,14 @@
 	<property name="wardest" location="../"/>
 	<property name="dist" location="../"/>
 	<property name="test.dir" location="src/test"/>
-	<property name="tomcathome" location="${env.TOMCAT_HOME}"/>
+	<property name="TOMCAT_HOME" location="G:/Java/Lib/apache-tomcat-8.0.12"/>
+	<property name="tomcathome" location="${TOMCAT_HOME}"/>
 	<condition property="log4jprops" value="-Dlog4j.configuration=log4j.properties.debug" else="-Dlog4j.configuration=log4j.properties">
 		<istrue value="${verboselogging}"/>
 	</condition>
 	
 	<!-- Determine the site from the environment variable ARCHAPPL_SITEID. If this is not set, we assume the unit tests environment -->
-	<condition property="archapplsite" value="${env.ARCHAPPL_SITEID}" else="tests">
+	<condition property="archapplsite" value="${env.ARCHAPPL_SITEID}" else="palxfel">
 		<isset property="env.ARCHAPPL_SITEID"/>
 	</condition>
 
@@ -35,7 +36,7 @@
 	<tstamp>
 		<format property="build_date_time" pattern="dd-MMMM-yyyy'T'HH-mm-ss"/>
 	</tstamp>
-	<condition property="version" value="${ver}_${env.BUILDS_ALL_TIME}" else="${ver}_SNAPSHOT_${build_date_time}">
+	<condition property="version" value="${ver}_${env.BUILDS_ALL_TIME}" else="${ver}_${build_date_time}">
 		<isset property="env.BUILDS_ALL_TIME"/>
 	</condition>
 	
